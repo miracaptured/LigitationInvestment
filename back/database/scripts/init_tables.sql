@@ -44,3 +44,64 @@ CREATE TABLE IF NOT EXISTS documents (
     name        VARCHAR(128) NOT NULL,
     link        TEXT UNIQUE
 );
+
+CREATE TABLE IF NOT EXISTS cases_by_users (
+    case_id        INTEGER REFERENCES cases(case_id),
+    user_id       INTEGER REFERENCES users(user_id),
+    PRIMARY KEY (case_id, user_id)
+);
+
+
+INSERT INTO profiles VALUES
+(1, 'истец'), (2, 'ответчик'), (3, 'адвокат'), (4, 'юрист');
+
+INSERT INTO cities VALUES
+('Москва');
+
+INSERT INTO statuses VALUES
+(1, 'на диагностике'), (2, 'на инвестировании');
+
+
+
+CREATE OR REPLACE FUNCTION get_cases_by_user(user_id    INTEGER)
+RETURNS TABLE (
+    case_id     INTEGER,
+    name        VARCHAR(128),
+    status      INTEGER,
+    claim       INTEGER,
+    description TEXT
+) AS
+$$
+SELECT
+    cs.case_id,
+    cs.name,
+    cs.status,
+    cs.claim,
+    cs.description
+FROM cases AS cs
+JOIN cases_by_users AS cu
+    ON cs.case_id = cu.case_id
+    AND cu.user_id = user_id;
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE PROCEDURE link_user_and_case (
+    p_user_id     INTEGER,
+    p_case_id     INTEGER
+) AS
+$$
+INSERT INTO cases_by_users (case_id, user_id)
+VALUES (p_case_id, p_user_id);
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE PROCEDURE unlink_user_and_case (
+    p_user_id   INTEGER,
+    p_case_id   INTEGER
+) AS
+$$
+DELETE FROM cases_by_users
+WHERE user_id = p_user_id
+AND case_id = p_case_id;
+$$
+LANGUAGE SQL;
