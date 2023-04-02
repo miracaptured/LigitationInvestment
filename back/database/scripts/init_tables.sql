@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_id     INTEGER PRIMARY KEY,
     profile     INTEGER REFERENCES profiles(profile_val),
     is_company  BOOLEAN NOT NULL,
-    email       VARCHAR(128) NOT NULL,
+    email       VARCHAR(128) UNIQUE NOT NULL,
     name        VARCHAR(128) NOT NULL,
     birthdate   DATE NOT NULL,
     city        VARCHAR(64) REFERENCES cities(city),
