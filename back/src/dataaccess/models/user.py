@@ -1,9 +1,7 @@
 from dataaccess.models.base import Base
 from sqlalchemy import Column, String, Integer, Boolean, Date, Sequence
-from multipledispatch import dispatch
 
 USER_ID = Sequence('user_id_seq')
-
 
 class User(Base):
     __tablename__ = 'users'
@@ -20,6 +18,7 @@ class User(Base):
     
     def to_json(self) -> dict:
         return {
+            'user_id': self.user_id,
             'profile': self.profile,
             'is_company': self.is_company,
             'email': self.email,
@@ -30,8 +29,8 @@ class User(Base):
             'job': self.job
         }
 
-    user_id     =   Column(Integer, primary_key=True, default=USER_ID.next_value())
-    profile     =   Column(Integer)
+    user_id     =   Column(Integer, USER_ID, primary_key=True)
+    profile     =   Column(String)
     is_company  =   Column(Boolean)
     email       =   Column(String)
     name        =   Column(String)

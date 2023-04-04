@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, AnyHttpUrl
+from pydantic import BaseModel, Field
 
 class DocumentSchema(BaseModel):
     doc_id:     int     =   Field(default=None)

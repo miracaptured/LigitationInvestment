@@ -1,8 +1,6 @@
 from contextlib import contextmanager
-
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
-from dataaccess.models.base import Base
 from dataaccess.config import DBNAME, DBPASSWORD, DBUSER, HOST, PORT
 
 main_engine = sa.create_engine(
@@ -19,6 +17,8 @@ def session_scope():
     session = DBSession()
     try:
         yield session
+        session.flush()
+        session.expunge_all()
         session.commit()
     except Exception as e:
         session.rollback()

@@ -1,8 +1,10 @@
 from dataaccess.dbsession import session_scope
 from dataaccess.models.user import User
-from dataaccess.models.case import Case, to_case
+from dataaccess.models.case import Case
 from dataaccess.models.document import Document
+from dataaccess.crud.utils import Constants, USER_PROFILES
 import sqlalchemy as sa
+from sqlalchemy import exists
 from multipledispatch import dispatch
 
 
@@ -10,53 +12,77 @@ from multipledispatch import dispatch
 USER TABLE
 '''
 
-def exists(email: str) -> bool:
+def check_user_profile(profile: str) -> bool:
+    return profile in USER_PROFILES
+
+def user_exists(email: str) -> bool:
     with session_scope() as session:
         return session.query(exists().where(User.email == email)).scalar()
 
 def get_user_by_id(id: int) -> User:
     with session_scope() as session:
         result = session.query(User).where(User.user_id == id).first()
-        session.expunge_all()
-        return result
+    return result
 
 def get_user_by_email(email: str) -> User:
     with session_scope() as session:
         result = session.query(User).where(User.email == email).first()
-        session.expunge_all()
-        return result
+    return result
 
 @dispatch(User)
-def add_user(user: User) -> None:
+def add_user(user: User) -> User:
+    if check_user_profile(user.profile) is False:
+        raise Exception(Constants.wrong_profile)
+    
     with session_scope() as session:
-        session.add(user)
+            session.add(user)
+    return user
 
-@dispatch(int, bool, str, str, str, str, str, str)
-def add_user(profile, is_company, email, namfe, birthdate, city, phone, job) -> None:
+@dispatch(str, bool, str, str, str, str, str, str)
+def add_user(profile, is_company, email, name, birthdate, city, phone, job) -> User:
+    if check_user_profile(profile) is False:
+        raise Exception(Constants.wrong_profile)
     with session_scope() as session:
-        session.add(User(profile, is_company, email, name, birthdate, city, phone, job))
+            inserted_user = User(profile, is_company, email, name, birthdate, city, phone, job)
+            session.add(inserted_user)
+    return inserted_user
+        
 
 @dispatch(dict)
-def add_user(user) -> None:
+def add_user(user) -> User:
+    if check_user_profile(user['profile']) is False:
+        raise Exception(Constants.wrong_profile)
     with session_scope() as session:
-        session.add(User(
-            user['profile'],
-            user['is_company'],
-            user['email'],
-            user['name'],
-            user['birthdate'],
-            user['city'],
-            user['phone'],
-            user['job'])
+            inserted_user = User(
+                user['profile'],
+                user['is_company'],
+                user['email'],
+                user['name'],
+                user['birthdate'],
+                user['city'],
+                user['phone'],
+                user['job']
             )
+            session.add(inserted_user)
+    return inserted_user
 
 def delete_user_by_id(id: int) -> None:
     with session_scope() as session:
-        session.delete(session.query(User).where(User.user_id == id).first())
+        to_delete = session.query(User).where(User.user_id == id).first()
+
+        if to_delete is None:
+            raise Exception(Constants.no_user)
+        
+        session.delete(to_delete)
 
 def delete_user_by_email(email: str) -> None:
     with session_scope() as session:
-        session.delete(session.query(User).where(User.email == email).first())
+        to_delete = session.query(User).where(User.email == email).first()
+
+        if to_delete is None:
+            raise Exception(Constants.no_user)
+        
+        session.delete(to_delete)
 
 '''
 CASES TABLE
@@ -65,22 +91,52 @@ CASES TABLE
 def get_case_by_id(id: int) -> Case:
     with session_scope() as session:
         result = session.query(Case).where(Case.case_id == id).first()
-        session.expunge_all()
-        return result
+    return result
+
+def get_case_by_name(name: str) -> Case:
+    with session_scope() as session:
+        result = session.query(Case).where(Case.name == name).first()
+    return result
 
 @dispatch(Case)
-def add_case(case: Case) -> None:
+def add_case(case: Case) -> Case:
     with session_scope() as session:
         session.add(case)
+    return case
 
 @dispatch(dict)
-def add_case(case: dict) -> None:
+def add_case(case: dict) -> Case:
     with session_scope() as session:
-        session.add(Case(case['name'], case['status'], case['claim'], case['description']))
+        inserted_case = Case(
+            case['name'],
+            case['status'],
+            case['claim'],
+            case['description']
+            )
+        
+        session.add(inserted_case)
+    return inserted_case
+
 
 def delete_case_by_id(id: int) -> None:
     with session_scope() as session:
-        session.delete(session.query(Case).where(Case.case_id == id).first())
+        to_delete = session.query(Case).where(Case.case_id == id).first()
+
+        if to_delete is None:
+            raise Exception('No such case!')
+        
+        delete_documents_by_case_id(to_delete.case_id)
+        session.delete(to_delete)
+
+def delete_case_by_name(name: str) -> None:
+    with session_scope() as session:
+        to_delete = session.query(Case).where(Case.name == name).first()
+
+        if to_delete is None:
+            raise Exception('No such case!')
+        
+        delete_documents_by_case_id(to_delete.case_id)
+        session.delete(to_delete)
 
 
 '''
@@ -90,43 +146,68 @@ DOCUMENTS TABLE
 def get_document_by_id(id: int) -> Document:
     with session_scope() as session:
         result = session.query(Document).where(Document.doc_id == id).first()
-        session.expunge_all()
-        return result
+    
+    return result
 
 @dispatch(Document)
-def add_document(doc: Document) -> None:
+def add_document(doc: Document) -> Document:
     with session_scope() as session:
         session.add(doc)
 
+    return doc
+
 @dispatch(dict)
-def add_document(doc: dict) -> None:
+def add_document(doc: dict) -> Document:
     with session_scope() as session:
-        session.add(Document(doc['case_id'], doc['name'], doc['link']))
+        inserted_doc = Document(doc['case_id'], doc['name'], doc['link'])
+        session.add(inserted_doc)
+
+    return inserted_doc
+
+def delete_documents_by_case_id(case_id: int) -> None:
+    with session_scope() as session:
+        session.query(Document).filter(Document.case_id == case_id).delete(synchronize_session=False)
 
 def delete_document_by_id(id: int) -> None:
     with session_scope() as session:
-        session.delete(session.query(Document).where(Document.doc_id == id).first())
+        to_delete = session.query(Document).where(Document.doc_id == id).first()
+
+        if to_delete is None:
+            raise Exception(Constants.no_document)
+        
+        session.delete(to_delete)
 
 
 '''
 RELATIONS
 '''
 
-def link_user_and_case(user_id: int, case_id: int):
+def link_user_and_pswd(user_id: int, pswd: str):
     with session_scope() as session:
-        session.execute(sa.text(f'CALL link_user_and_case({user_id}, {case_id})'))
+        session.execute(sa.text(f"CALL link_user_pswd({user_id}, '{pswd}')"))
+
+def link_user_and_case(user_id: int, case_id: int, user_role: str):
+    with session_scope() as session:
+        session.execute(sa.text(f"CALL link_user_and_case({user_id}, {case_id}, '{user_role}')"))
 
 def unlink_user_and_case(user_id: int, case_id: int):
     with session_scope() as session:
-        session.execute(sa.text(f'CALL unlink_user_and_case({user_id}, {case_id})'))
+        session.execute(sa.text(f"CALL unlink_user_and_case({user_id}, {case_id})"))
 
 def get_documents_by_case_id(id: int) -> list[Document]:
     with session_scope() as session:
         result = session.query(Document).where(Document.case_id == id).all()
-        session.expunge_all()
         return result
-    
-def get_cases_by_user_id(user_id: int) -> list[Case]:
+
+def user_owns_case(user_id: int, case_id: int) -> bool:
     with session_scope() as session:
-        return list(map(lambda r: to_case(r),
-                        session.execute(sa.text(f'SELECT * FROM get_cases_by_user({user_id})')).mappings().all()))
+        return session.execute(sa.text(f'SELECT user_owns_case({user_id}, {case_id})')).scalar()
+
+def get_cases_by_user_id(user_id: int) -> list[dict]:
+    with session_scope() as session:
+        return list(session.execute(sa.text(f'SELECT * FROM get_cases_by_user({user_id})')).mappings().all())
+
+def get_all_cases() -> list[Case]:
+    with session_scope() as session:
+        result = session.query(Case).all()
+        return result

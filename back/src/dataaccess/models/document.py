@@ -12,7 +12,7 @@ class Document(Base):
         self.name = name
         self.link = link
 
-    doc_id      =   Column(Integer, primary_key=True, default=DOC_ID.next_value())
+    doc_id      =   Column(Integer, DOC_ID, primary_key=True)
     case_id     =   Column(Integer)
     name        =   Column(String)
     link        =   Column(Text)

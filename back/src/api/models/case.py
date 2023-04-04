@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 class CaseSchema(BaseModel):
     case_id:        int     =   Field(default=None)
     name:           str     =   Field(...)
-    status:         int     =   Field(...)
+    status:         str     =   Field(...)
     claim:          int     =   Field(...)
     description:    str     =   Field(...)
 
@@ -11,7 +11,7 @@ class CaseSchema(BaseModel):
         schema_extra = {
             "example": {
                 'name': 'testname',
-                'status': 1,
+                'status': 'на диагностике',
                 'claim': 0,
                 'description': 'testdescription'
             }
@@ -23,4 +23,16 @@ class CaseSchema(BaseModel):
             'status':       self.status,
             'claim':        self.claim,
             'description':  self.description
+        }
+
+class UserCaseRelaionSchema(BaseModel):
+    case_id: int = Field(...)
+    user_id: int = Field(...)
+    user_role: str = Field(...)
+
+    def to_dict(self) -> dict:
+        return {
+            'case_id': self.case_id,
+            'user_id': self.user_id,
+            'user_role': self.user_role
         }
