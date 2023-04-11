@@ -1,0 +1,56 @@
+@import '~@angular/material/prebuilt-themes/indigo-pink.css';
+
+
+// some basic resets
+
+$lt-gray: #ddd;
+$background-dark: #3100a3;
+$background-light: #4f6dce;
+$background-pale: #c4cde9;
+$primary-color-dark:   #3100a3;
+$primary-color:        #3a57b7;
+$primary-color-light:  #c4d1e9;
+$primary-color-text:   #FFFFFF;
+$accent-color:         #FFC107;
+$primary-text-color:   #212121;
+$secondary-text-color: #757575;
+$divider-color:        #BDBDBD;
+
+@mixin zero-margin($pad-up-down, $pad-left-right) {
+    margin: 0px auto;
+    padding: $pad-up-down $pad-left-right;
+}
+
+
+.background-primary {
+    background-color: $background-dark!important;
+  }
+.background-accent {
+    background-color: $accent-color!important;
+  }
+.text-floral-white {
+    color: floralwhite!important;
+}
+
+.flex-spacer {
+  flex: 1 1 auto;
+}
+
+.highlight {
+  background-color: $background-pale;
+  border: 1px solid $background-pale;
+  z-index: 1;
+  transform: scale(1.01);
+}
+
+
+body {
+    padding: 0;
+    margin: 0;
+    font-family: Roboto, sans-serif;
+}
+
+.container {
+    margin: 20px;
+    display: flex;
+}

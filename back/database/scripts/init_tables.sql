@@ -6,12 +6,12 @@ CREATE TABLE IF NOT EXISTS roles (
     role_name CHAR(8) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS cities (
-    city VARCHAR(64) PRIMARY KEY
-);
-
 CREATE TABLE IF NOT EXISTS case_statuses (
     status_name  VARCHAR(32) PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS application_statuses (
+    status_name VARCHAR(32) PRIMARY KEY
 );
 
 CREATE SEQUENCE IF NOT EXISTS user_id_seq START 1;
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     email       VARCHAR(128) UNIQUE NOT NULL,
     name        VARCHAR(128) NOT NULL,
     birthdate   DATE NOT NULL,
-    city        VARCHAR(64) REFERENCES cities(city),
+    city        VARCHAR(64),
     phone       CHAR(16) NOT NULL,
     job         VARCHAR(64)
 );
@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS users_passwords (
     user_id     INTEGER UNIQUE NOT NULL,
     user_pswd   VARCHAR(128) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
+);
+
+CREATE SEQUENCE IF NOT EXISTS application_id_seq START 1;
+
+CREATE TABLE IF NOT EXISTS applications (
+    application_id  INTEGER PRIMARY KEY,
+    name            VARCHAR(128) NOT NULL,
+    status          VARCHAR(32) REFERENCES application_statuses(status_name),
+    claim           INTEGER NOT NULL,
+    description     TEXT
 );
 
 CREATE SEQUENCE IF NOT EXISTS case_id_seq START 1;
@@ -53,10 +63,18 @@ CREATE TABLE IF NOT EXISTS documents (
     link        TEXT UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS applications_by_users (
+    application_id  INTEGER REFERENCES applications(application_id),
+    user_id         INTEGER REFERENCES users(user_id),
+    user_role       CHAR(8) REFERENCES roles(role_name),
+    PRIMARY KEY (application_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS cases_by_users (
     case_id        INTEGER REFERENCES cases(case_id),
     user_id        INTEGER REFERENCES users(user_id),
     user_role      CHAR(8) REFERENCES roles(role_name),
+    investment     INTEGER,
     PRIMARY KEY (case_id, user_id)
 );
 
@@ -64,15 +82,38 @@ CREATE TABLE IF NOT EXISTS cases_by_users (
 INSERT INTO profiles VALUES
 ('инвестор'), ('фигурант');
 
-INSERT INTO case_statuses VALUES
-('на диагностике'), ('отклонено'), ('поиск инвестиций'), ('найдены инвестиции');
+INSERT INTO application_statuses VALUES
+('на рассмотрении'), ('отклонено'),
 
-INSERT INTO cities VALUES
-('Москва');
+INSERT INTO case_statuses VALUES
+('на диагностике'), ('поиск инвестиций'), ('найдены инвестиции'), ('закрыто');
 
 INSERT INTO roles VALUES
 ('истец'), ('ответчик'), ('инвестор');
 
+CREATE OR REPLACE FUNCTION get_applications_by_user(user_id INTEGER)
+RETURNS TABLE (
+    application_id INTEGER,
+    name           VARCHAR(128),
+    status         VARCHAR(32),
+    claim          INTEGER,
+    description    TEXT,
+    user_role      CHAR(8)
+) AS
+$$
+SELECT
+    ap.application_id,
+    ap.name,
+    ap.status,
+    ap.claim,
+    ap.description,
+    au.user_role
+FROM applications AS ap
+JOIN applications_by_users AS au
+    ON ap.application_id = au.application_id
+    AND au.user_id = user_id;
+$$
+LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION get_cases_by_user(user_id    INTEGER)
 RETURNS TABLE (
@@ -81,7 +122,8 @@ RETURNS TABLE (
     status      VARCHAR(32),
     claim       INTEGER,
     description TEXT,
-    user_role   CHAR(8)
+    user_role   CHAR(8),
+    investment  INTEGER
 ) AS
 $$
 SELECT
@@ -90,7 +132,8 @@ SELECT
     cs.status,
     cs.claim,
     cs.description,
-    cu.user_role
+    cu.user_role,
+    cu.investment
 FROM cases AS cs
 JOIN cases_by_users AS cu
     ON cs.case_id = cu.case_id
@@ -101,11 +144,12 @@ LANGUAGE SQL;
 CREATE OR REPLACE PROCEDURE link_user_and_case (
     p_user_id     INTEGER,
     p_case_id     INTEGER,
-    p_user_role   CHAR(8)
+    p_user_role   CHAR(8),
+    p_investment  INTEGER
 ) AS
 $$
-INSERT INTO cases_by_users (case_id, user_id, user_role)
-VALUES (p_case_id, p_user_id, p_user_role);
+INSERT INTO cases_by_users (case_id, user_id, user_role, investment)
+VALUES (p_case_id, p_user_id, p_user_role, p_investment);
 $$
 LANGUAGE SQL;
 

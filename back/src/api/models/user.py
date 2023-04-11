@@ -24,6 +24,7 @@ class UserSchema(BaseModel):
     profile:    str     =   Field(...)
     is_company: bool    =   Field(...)
     email:      str     =   EmailStr(...)
+    password:   str     =   Field(...)
     name:       str     =   Field(...)
     birthdate:  str     =   Field(...)
     city:       str     =   Field(...)
@@ -46,7 +47,7 @@ class UserSchema(BaseModel):
     
     def to_dict(self) -> dict:
         return {
-            'profile': self.profile,
+            'profile': self.profile.lower(),
             'is_company': self.is_company,
             'email': self.email,
             'name': self.name,

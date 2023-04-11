@@ -1,0 +1,40 @@
+<div fxFlex>
+    <mat-toolbar>
+        <button mat-button mat-dialog-close>&times;</button>
+    </mat-toolbar>
+    <div
+    fxLayout="row"
+    fxLayout.xs="column" 
+    fxLayoutAlign="center center">
+    <form novalidate #loginForm="ngForm" (ngSubmit)="onSubmit()">
+        <mat-dialog-content>
+            <p>
+                <mat-form-field>
+                    <input matInput placeholder="Email" type="email"
+                        [(ngModel)]="user.email" name="email"
+                        #email="ngModel" required>
+                    <mat-error *ngIf="email.errors?.required">Email is required</mat-error>
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Password" type="password"
+                        [(ngModel)]="user.password" name="password"
+                        #password="ngModel" required>
+                    <mat-error *ngIf="password.errors?.required">Password is required</mat-error>
+                </mat-form-field>
+            </p>
+        </mat-dialog-content>
+        <mat-dialog-actions>
+            <span class="flex-spacer"></span>
+            <button mat-button mat-dialog-close>Отмена</button>
+            <button mat-button type="submit" class="background-primary text-floral-white"
+            [disabled]="loginForm.form.invalid">Войти</button>
+        </mat-dialog-actions>
+    </form>
+    </div>
+    <div
+    fxLayout="row"
+    fxLayout.xs="column" 
+    fxLayoutAlign="center center">
+    <p>Нет аккаунта? <a routerLink="." on-click="openRegForm()">Зарегистрироваться</a></p>
+    </div>
+</div>

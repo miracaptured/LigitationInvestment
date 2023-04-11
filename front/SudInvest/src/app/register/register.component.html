@@ -1,0 +1,80 @@
+<div fxLayoutGap="10px">
+    <div fxLayout="row" fxLayout.xs="row">
+        <p style="margin: 10px">Регистрация</p>
+        <span class="flex-spacer"></span>
+        <button mat-button mat-dialog-close style="margin: 10px">&times;</button>
+    </div>
+    <div>
+        <form #registerForm="ngForm" (ngSubmit)="onSubmit()">
+            <mat-dialog-content>
+                <div fxFlex style="overflow-y: hidden;" fxLayoutGap="10">
+                    <mat-form-field>
+                        <input matInput placeholder="Электронная почта" type="email"
+                            [(ngModel)]="user.email" name="email"
+                            #email="ngModel" required>
+                        <mat-error *ngIf="email.errors?.required">Email is required</mat-error>
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Пароль" type="password"
+                            [(ngModel)]="user.password" name="password"
+                            #password="ngModel" required>
+                        <mat-error *ngIf="password.errors?.required">Password is required</mat-error>
+                    </mat-form-field>
+                    <div>
+                        <label id="example-radio-group-label">Тип профиля</label>
+                        <mat-radio-group
+                            aria-labelledby="example-radio-group-label"
+                            class="example-radio-group"
+                            [(ngModel)]="user.profile"
+                            name="profile"
+                            #profile="ngModel">
+                            <mat-radio-button *ngFor="let profile of ['Инвестор', 'Юзер']" [value]="profile">
+                                {{profile}}
+                            </mat-radio-button>
+                        </mat-radio-group>
+                    </div>
+                    <mat-form-field>
+                        <input matInput placeholder="ФИО" type="text"
+                            [(ngModel)]="user.name" name="name"
+                            #name="ngModel" required>
+                        <mat-error *ngIf="name.errors?.required">Name is required</mat-error>
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Дата рождения" [matDatepicker]="picker"
+                            [(ngModel)]="user.birthdate" name="birthdate"
+                            #birthdate="ngModel" required>
+                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Город"
+                        [(ngModel)]="user.city" name="city"
+                        #city="ngModel" required>
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Номер телефона" type="tel"
+                        pattern="[+]{1}[0-9]{11,14}"
+                        [(ngModel)]="user.phone" name="phone"
+                        #phone="ngModel" required>
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Место работы"
+                        [(ngModel)]="user.job" name="job"
+                        #job="ngModel" required>
+                    </mat-form-field>
+                    <mat-checkbox
+                        [(ngModel)]="user.is_company"
+                        name="is_company" ngDefaultControl>
+                        Являюсь представителем юр. лица
+                    </mat-checkbox>
+                </div>
+            </mat-dialog-content>
+            <mat-dialog-actions>
+                <span class="flex-spacer"></span>
+                <button mat-button mat-dialog-close>Отмена</button>
+                <button mat-button type="submit" class="background-primary text-floral-white"
+                [disabled]="registerForm.form.invalid">Подтвердить</button>
+            </mat-dialog-actions>
+        </form>
+    </div>
+</div>

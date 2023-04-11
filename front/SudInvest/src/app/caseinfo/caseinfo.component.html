@@ -1,0 +1,34 @@
+<div class="container"
+    fxLayout="row"
+    fxLayout.sm="column"
+    fxLayout.xs="column"
+    fxLayoutAlign.gt-md="space-around center"
+    fxLayoutGap="10px" 
+    fxLayoutGap.xs="0">
+
+
+  <div fxFlex [hidden]="case">
+      <div fxLayoutAlign="center">
+          <!--<mat-spinner></mat-spinner> <h4>Loading . . . Please wait.</h4>-->
+      </div>
+  </div>
+
+    <div fxFlex="40" *ngIf="case">
+        <mat-card>
+            <mat-card-header>
+                <mat-card-title>
+                <h3>{{case.name | uppercase}}</h3>
+                </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+                <p>{{case.description}}</p>
+            </mat-card-content>
+            <mat-card-actions>
+                <span class="flex-spacer"></span>
+                <span class="fa fa-chevron-right fa-lg"></span>
+            </mat-card-actions>
+        </mat-card>
+    </div>
+  
+
+</div>

@@ -2,6 +2,7 @@ from dataaccess.dbsession import session_scope
 from dataaccess.models.user import User
 from dataaccess.models.case import Case
 from dataaccess.models.document import Document
+from dataaccess.models.application import Application
 from dataaccess.crud.utils import Constants, USER_PROFILES
 import sqlalchemy as sa
 from sqlalchemy import exists
@@ -13,7 +14,7 @@ USER TABLE
 '''
 
 def check_user_profile(profile: str) -> bool:
-    return profile in USER_PROFILES
+    return profile.lower() in USER_PROFILES
 
 def user_exists(email: str) -> bool:
     with session_scope() as session:
@@ -49,7 +50,7 @@ def add_user(profile, is_company, email, name, birthdate, city, phone, job) -> U
         
 
 @dispatch(dict)
-def add_user(user) -> User:
+def add_user(user: dict) -> User:
     if check_user_profile(user['profile']) is False:
         raise Exception(Constants.wrong_profile)
     with session_scope() as session:
@@ -81,6 +82,34 @@ def delete_user_by_email(email: str) -> None:
 
         if to_delete is None:
             raise Exception(Constants.no_user)
+        
+        session.delete(to_delete)
+
+'''
+APPLICATIONS TABLE
+'''
+def get_application_by_id(id: int) -> Application:
+    with session_scope() as session:
+        result = session.query(Application).where(Application.application_id == id).first()
+    return result
+
+def add_application(application: dict) -> Application:
+    with session_scope() as session:
+        inserted_application = Application(
+                application['name'],
+                application['status'],
+                application['claim'],
+                application['description']
+        )
+        session.add(inserted_application)
+    return inserted_application
+
+def delete_application_by_id(id: int) -> None:
+    with session_scope() as session:
+        to_delete = session.query(Application).where(Application.application_id == id).first()
+
+        if to_delete is None:
+            raise Exception('No such case!')
         
         session.delete(to_delete)
 
@@ -186,9 +215,13 @@ def link_user_and_pswd(user_id: int, pswd: str):
     with session_scope() as session:
         session.execute(sa.text(f"CALL link_user_pswd({user_id}, '{pswd}')"))
 
+def invest(user_id: int, case_id: int, investment: int):
+    with session_scope() as session:
+        session.execute(sa.text(f"CALL link_user_and_case({user_id}, {case_id}, 'инвестор', {investment})"))
+
 def link_user_and_case(user_id: int, case_id: int, user_role: str):
     with session_scope() as session:
-        session.execute(sa.text(f"CALL link_user_and_case({user_id}, {case_id}, '{user_role}')"))
+        session.execute(sa.text(f"CALL link_user_and_case({user_id}, {case_id}, '{user_role}', 0)"))
 
 def unlink_user_and_case(user_id: int, case_id: int):
     with session_scope() as session:
