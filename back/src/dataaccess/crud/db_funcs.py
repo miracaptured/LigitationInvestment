@@ -93,12 +93,19 @@ def get_application_by_id(id: int) -> Application:
         result = session.query(Application).where(Application.application_id == id).first()
     return result
 
+def get_applications_by_user(id: int) -> list[Application]:
+    with session_scope() as session:
+        result = session.query(Application).where(Application.initiator_id == id).all()
+    return result
+
 def add_application(application: dict) -> Application:
     with session_scope() as session:
         inserted_application = Application(
                 application['name'],
+                application['initiator_id'],
                 application['status'],
                 application['claim'],
+                application['initiator_role'],
                 application['description']
         )
         session.add(inserted_application)
@@ -138,8 +145,10 @@ def add_case(case: dict) -> Case:
     with session_scope() as session:
         inserted_case = Case(
             case['name'],
+            case['initiator_id'],
             case['status'],
             case['claim'],
+            case['initiator_role'],
             case['description']
             )
         
@@ -211,6 +220,10 @@ def delete_document_by_id(id: int) -> None:
 RELATIONS
 '''
 
+def check_password(user_email: str, pswd: str):
+    with session_scope() as session:
+        return session.execute(sa.text(f"SELECT check_pswd('{user_email}', '{pswd}')")).scalar()
+
 def link_user_and_pswd(user_id: int, pswd: str):
     with session_scope() as session:
         session.execute(sa.text(f"CALL link_user_pswd({user_id}, '{pswd}')"))
@@ -244,3 +257,7 @@ def get_all_cases() -> list[Case]:
     with session_scope() as session:
         result = session.query(Case).all()
         return result
+    
+def get_investment_by_case(case_id: int):
+    with session_scope() as session:
+        return session.execute(sa.text(f'SELECT get_investments_by_case({case_id})')).scalar()

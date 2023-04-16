@@ -10,7 +10,13 @@ import { UserService } from '../services/user.service';
 })
 export class HeaderComponent implements OnInit {
 
+  user = () => UserService.CurrentUser;
+
   checkUser = () => UserService.checkUser();
+
+  checkFigurant = () => UserService.checkFigurant();
+
+  casesTitle = () => UserService.checkFigurant() ? 'Мои кейсы' : 'Кейсы';
 
   constructor(public dialog: MatDialog) {
   }

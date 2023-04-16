@@ -1,6 +1,29 @@
 <div class="container"
   fxLayout="column"
   fxLayoutGap="10px">
-  <mat-grid-tile *ngFor="let case of cases" [routerLink]="['/case', case]"></mat-grid-tile>
+  <div fxFlex>
+    <div fxLayout="column" fxLayout.gt-sm="row">
+      <div fxFlex="100" fxLayout="column" fxLayoutGap="20px">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>
+              <h3>Судебные иски</h3>
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngIf="checkFigurant()">
+              <mat-slide-toggle
+                [(ngModel)]="showAll" (change)="onShowModeChanged()"
+                name="showAll" ngDefaultControl>
+                {{checkboxTitle}}
+              </mat-slide-toggle>
+            </div>
+            <app-cases-user *ngIf="!showAll"></app-cases-user>
+            <app-cases-all *ngIf="showAll || !checkFigurant()"></app-cases-all>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
 </div>
 

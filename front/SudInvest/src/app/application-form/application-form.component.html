@@ -1,0 +1,51 @@
+<div fxLayoutGap="10px">
+    <div fxLayout="row" fxLayout.xs="row">
+        <p style="margin: 10px">Новая заявка</p>
+        <span class="flex-spacer"></span>
+        <button mat-button mat-dialog-close style="margin: 10px">&times;</button>
+    </div>
+    <div>
+        <form #applicationForm="ngForm" (ngSubmit)="onSubmit()">
+            <mat-dialog-content>
+                <div fxFlex style="overflow-y: hidden;" fxLayoutGap="10">
+                    <mat-form-field>
+                        <input matInput placeholder="Название дела" type="text"
+                            [(ngModel)]="application.name" name="name"
+                            #name="ngModel" required>
+                        <mat-error *ngIf="name.errors?.required">Name is required</mat-error>
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Сумма иска" type="number"
+                            [(ngModel)]="application.claim" name="claim"
+                            #claim="ngModel" min="0" required>
+                        <mat-error *ngIf="claim.errors?.required">Claim is required</mat-error>
+                    </mat-form-field>
+                    <div>
+                        <label id="example-radio-group-label">Роль в деле</label>
+                        <mat-radio-group
+                            aria-labelledby="example-radio-group-label"
+                            class="example-radio-group"
+                            [(ngModel)]="application.initiator_role"
+                            name="role"
+                            #role="ngModel">
+                            <mat-radio-button *ngFor="let role of ['Истец', 'Ответчик']" [value]="role">
+                                {{role}}
+                            </mat-radio-button>
+                        </mat-radio-group>
+                    </div>
+                    <mat-form-field>
+                        <input matInput placeholder="Описание" type="text"
+                            [(ngModel)]="application.description" name="description"
+                            #description="ngModel">
+                    </mat-form-field>
+                </div>
+            </mat-dialog-content>
+            <mat-dialog-actions>
+                <span class="flex-spacer"></span>
+                <button mat-button mat-dialog-close>Отмена</button>
+                <button mat-button type="submit" class="background-primary text-floral-white"
+                [disabled]="applicationForm.form.invalid">Подтвердить</button>
+            </mat-dialog-actions>
+        </form>
+    </div>
+</div>

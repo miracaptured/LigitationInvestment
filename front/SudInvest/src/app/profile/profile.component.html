@@ -1,1 +1,77 @@
-<p>profile works!</p>
+<div class="container" *ngIf="!user">
+    <div fxFlex style="display: flex; justify-content: center; align-items: center;">
+        <mat-card style="justify-content: center; align-items: center;">
+            <mat-card-header>
+                <mat-card-title>
+                    <p>ОШИБКА</p>
+                </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+                <p>{{errorMsg}}</p>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>
+
+<div class="container"
+  fxLayout="column"
+  fxLayoutGap="10px"
+  *ngIf="user">
+
+  <div fxFlex>
+    <div fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="20px">
+      <div fxFlex="70">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>
+                <p>ФИО: {{user.name}}</p>
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+                <mat-list-item>
+                    <span matListItemTitle>Почта: {{user.email}}</span>
+                </mat-list-item>
+                <mat-list-item>
+                    <span matListItemTitle>Номер телефона: {{user.phone}}</span>
+                </mat-list-item>
+                <mat-list-item>
+                    <span matListItemTitle>Тип профиля: {{user.profile.toLowerCase()}}</span>
+                </mat-list-item>
+                <mat-list-item>
+                    <span matListItemTitle>Дата рождения: {{user.birthdate}}</span>
+                </mat-list-item>
+                <mat-list-item>
+                    <span matListItemTitle>Город: {{user.city}}</span>
+                </mat-list-item>
+                <mat-list-item>
+                    <span matListItemTitle>Место работы: {{user.job}}</span>
+                    <span matListItemLine *ngIf="user.is_company">является представителем юр. лица</span>
+                </mat-list-item>
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div fxFlex="30">
+        <mat-card>
+            <mat-card-content fxFlex fxLayout="column" fxLayoutGap="20px">
+                <button mat-raised-button on-click="logout()">Выйти из учетной записи</button>
+                <button *ngIf="user.profile.toLowerCase() === 'фигурант'" mat-raised-button on-click="openAppForm()">Новая заявка</button>
+            </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+  <mat-card>
+    <mat-card-header>
+        <mat-card-title>
+            <h3 *ngIf="user.profile.toLowerCase() === 'фигурант'">Мои заявки</h3>
+            <h3 *ngIf="user.profile.toLowerCase() === 'инвестор'">Мои кейсы</h3>
+        </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <app-applications *ngIf="user.profile.toLowerCase() === 'фигурант'"></app-applications>
+        <app-cases-user *ngIf="user.profile.toLowerCase() === 'инвестор'"></app-cases-user>
+    </mat-card-content>
+  </mat-card>
+</div>

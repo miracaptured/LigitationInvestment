@@ -1,11 +1,17 @@
-from fastapi import FastAPI, HTTPException
+
+from datetime import timedelta, datetime
+from typing import Annotated, Union
+from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi.middleware.cors import CORSMiddleware
-from dataaccess.crud import db_funcs
-from dataaccess.crud.utils import Constants, USER_PROFILES, USER_ROLES
-from api.models.user import UserSchema, UserProfiles, get_user_role_str
-from api.models.case import CaseSchema
+from pydantic import BaseModel
+from dataaccess.crud.utils import Constants
+from api.models.user import UserSchema
 from api.models.application import ApplicationSchema
 from api.models.document import DocumentSchema
+import api.task_processor as task_processor
+from dataaccess.config import SSL_KEY
 
 app = FastAPI()
 
@@ -13,6 +19,7 @@ origins = [
     "http://localhost",
     "http://localhost:4200",
 ]
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,130 +29,96 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class Settings(BaseModel):
+    authjwt_secret_key: str = SSL_KEY
 
-@app.get('/')
-async def index():
-    return "test"
+@AuthJWT.load_config
+def get_config():
+    return Settings()
 
-@app.post('/user/')
-async def register_user(user: UserSchema):
+@app.post("/login")
+async def login(creds: dict, Authorize: AuthJWT = Depends()):
+    if task_processor.check_password(creds["email"], creds["password"]):
+        access_token = Authorize.create_access_token(subject=creds["email"])
+        return {
+            "access_token": access_token,
+            "user": task_processor.get_user_by_email(creds["email"])
+        }
+    else:
+        raise HTTPException(401, "Not Authorized")
+
+@app.get("/user")
+async def user(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    user_email = Authorize.get_jwt_subject()
+    return task_processor.get_user_by_email(user_email)
+
+@app.post("/register")
+async def register_user(user: UserSchema, Authorize: AuthJWT = Depends()):
     try:
-        returned_user = db_funcs.add_user(user.to_dict())
-        db_funcs.link_user_and_pswd(returned_user.user_id, user.password)
-        return returned_user.to_json()
+        returned_user = task_processor.register_user(user.to_dict())
+        access_token = Authorize.create_access_token(subject=user.email)
+        return {
+            "user": returned_user,
+            "access_token": access_token
+        }
     except Exception as e:
-        print(repr(e))
-        raise HTTPException(status_code = 401, detail = repr(e))
-    
-@app.get('/cases/all/')
-async def get_cases_list():
-    return db_funcs.get_all_cases()
+        raise HTTPException(403, e)
 
-@app.get('/cases/')
-async def get_cases_by_user(id: int):
-    return db_funcs.get_cases_by_user_id(id)
-
-@app.get('/userid/')
-async def get_user_by_id(id: int):
-    result = db_funcs.get_user_by_id(id)
-    if result == None:
-        raise HTTPException(status_code=404, detail=Constants.no_user)
-    
-    return result.to_json()
-
-@app.get('/user/')
-async def get_user_by_email(email: str):
-    result = db_funcs.get_user_by_email(email)
-    if result == None:
-        raise HTTPException(status_code=404, detail=Constants.no_user)
-    
-    return result.to_json()
-
-@app.get('/cases/')
-async def get_user_by_id(id: int):
-    result = db_funcs.get_case_by_id(id)
-    if result == None:
-        raise HTTPException(status_code=404, detail=Constants.no_case)
-    
-    return result.to_json()
-
-@app.get('/documents/')
-async def get_document_by_id(id: int):
-    result = db_funcs.get_document_by_id(id)
-    if result == None:
-        raise HTTPException(status_code=404, detail=Constants.no_document)
-    
-    return result.to_json()
-
-@app.get('/documents/all')
-async def get_all_documents(case_id: int):
-    result = db_funcs.get_documents_by_case_id(case_id)
-
-    return result
-
-@app.post('/application/')
-async def add_application(application: ApplicationSchema):
+@app.post("/applications")
+async def add_application(application: ApplicationSchema, Authorize: AuthJWT = Depends()):
     try:
-        returned_application = db_funcs.add_application(application.to_dict())
-        return returned_application.to_json()
-    except Exception as e:
-        print(repr(e))
-        raise HTTPException(status_code = 401, detail = repr(e))
+        Authorize.jwt_required()
+        return task_processor.add_application(application.to_dict())
+    except:
+        raise HTTPException(403)
 
-@app.get('/application/')
-async def get_application_by_id(id: int):
-    result = db_funcs.get_application_by_id(id)
-    if result == None:
-        raise HTTPException(status_code=404)
+@app.get("/applications")
+async def get_application_list(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    user_email = Authorize.get_jwt_subject()
+    user = task_processor.get_user_by_email(user_email)
+    if user is None:
+        raise HTTPException(404)
+    return task_processor.get_applications_by_user(user.user_id)
+
+@app.get("/cases/all")
+async def get_all_cases(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    try:
+        return task_processor.get_cases_list()
+    except Exception as e:
+        raise HTTPException(403, e)
+
+@app.get("/cases")
+async def get_cases_list(Authorize: AuthJWT = Depends()):
+    try:
+        Authorize.jwt_required()
+        user_email = Authorize.get_jwt_subject()
+        user = task_processor.get_user_by_email(user_email)
+        return task_processor.get_cases_by_user(user.user_id)
+    except:
+        raise HTTPException(403)
+
+@app.get("/cases/{case_id}/investment")
+async def get_investment(case_id: int):
+    try:
+        return task_processor.get_investment_by_case(case_id)
+    except:
+        raise HTTPException(403)
+
+@app.post("/invest")
+async def invest(data: dict, Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    user_email = Authorize.get_jwt_subject()
+    user = task_processor.get_user_by_email(user_email)
+    task_processor.link_investor(user.user_id, data['case_id'])
+    #task_processor.invest(user_id=user.user_id, case_id=data['case_id'], money=data['money'])
+
+@app.post("/doc")
+async def add_document(doc: DocumentSchema, Authorize: AuthJWT = Depends()):
+    try:
+        task_processor.add_document(doc.to_dict())
+    except:
+        raise HTTPException(403)
     
-    return result.to_json()
-
-@app.post('/invest/')
-async def invest(user_id: int, case_id: int, money: int):
-    db_funcs.invest(user_id, case_id, money)
-
-@app.delete('/user/')
-async def delete_user(id: int):
-    try:
-        returned_user = db_funcs.get_user_by_id(id)
-        db_funcs.delete_user_by_id(id)
-        return returned_user.to_json()
-    except Exception as e:
-        print(repr(e))
-        raise HTTPException(status_code = 401, detail = repr(e))
-    
-@app.delete('/application/')
-async def delete_application_by_id(id: int):
-    try:
-        returned_application = db_funcs.get_application_by_id(id)
-        db_funcs.delete_application_by_id(id)
-        return returned_application.to_json()
-    except Exception as e:
-        print(repr(e))
-        raise HTTPException(status_code = 401, detail = repr(e))
-
-@app.delete('/cases/')
-async def delete_case(user_id: int, case_id: int):
-    if db_funcs.user_owns_case(user_id, case_id) is False:
-        raise HTTPException(status_code = 403, detail = Constants.wrong_profile)
-    
-    db_funcs.unlink_user_and_case(user_id, case_id)
-    db_funcs.delete_case_by_id(case_id)
-
-@app.post('/doc/')
-async def add_document(doc: DocumentSchema):
-    try:
-        returned_doc = db_funcs.add_document(doc.to_dict())
-        return returned_doc.to_json()
-    except Exception as e:
-        raise HTTPException(status_code = 401, detail = repr(e))
-
-@app.delete('/doc/')
-async def delete_document(id: int):
-    try:
-        returned_doc = db_funcs.get_document_by_id(id)
-        db_funcs.delete_document_by_id(id)
-        return returned_doc
-    except Exception as e:
-        print(repr(e))
-        raise HTTPException(status_code = 401, detail = repr(e))

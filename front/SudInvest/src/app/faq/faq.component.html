@@ -1,0 +1,32 @@
+<div class="container"
+  fxLayout="column"
+  fxLayoutGap="10px">
+
+  <div fxFlex>
+    <div fxLayout="column" fxLayout.gt-sm="row">
+      <div fxFlex="100" fxLayout="column" fxLayoutGap="20px">
+        <mat-card>
+            <mat-card-header>
+                <mat-card-title>
+                    <h2>Часто задаваемые вопросы</h2>
+                </mat-card-title>
+            </mat-card-header>
+            <mat-card-content
+                fxLayout="column"
+                fxLayoutGap="10px">
+                <mat-accordion *ngFor="let question of questions">
+                    <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                {{question.title}}
+                            </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <p>{{question.answer}}</p>
+                    </mat-expansion-panel>
+                </mat-accordion>
+            </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

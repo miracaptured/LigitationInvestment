@@ -7,24 +7,30 @@ CASE_ID = Sequence('case_id_seq')
 class Case(Base):
     __tablename__ = 'cases'
 
-    def __init__(self, name, status, claim, description = ''):
+    def __init__(self, name, initiator_id, status, claim, initiator_role, description = ''):
         self.name = name
+        self.initiator_id = initiator_id
         self.status = status
         self.claim = claim
+        initiator_role = initiator_role
         self.description = description
 
     case_id     =   Column(Integer, CASE_ID, primary_key=True)
     name        =   Column(String)
+    initiator_id = Column(Integer)
     status      =   Column(String)
     claim       =   Column(Integer)
+    initiator_role = Column(String)
     description =   Column(Text)
 
     def to_json(self):
         return {
         'case_id':      self.case_id,
         'name':         self.name,
+        'initiator_id': self.initiator_id,
         'status':       self.status,
         'claim':        self.claim,
+        'initiator_role': self.initiator_role,
         'description':  self.description
     }
 
@@ -32,8 +38,10 @@ class Case(Base):
         return Case(
             case_id = row['case_id'],
             name = row['name'],
+            initiator_id = row['initiator_id'],
             status = row['status'],
             claim = row['claim'],
+            initiator_role = row['initiator_role'],
             description = row['description']
         )
 

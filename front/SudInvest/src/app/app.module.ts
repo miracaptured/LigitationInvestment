@@ -10,18 +10,24 @@ import { MatListModule } from '@angular/material/list';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { MatDialogModule } from '@angular/material/dialog'; 
+import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogModule } from '@angular/material/dialog'; 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox'
 import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatNativeDateModule} from '@angular/material/core';
-import {MatRadioModule} from '@angular/material/radio';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatGridListModule } from '@angular/material/grid-list';
+import {MatTableModule} from '@angular/material/table';
+import {MatExpansionModule} from '@angular/material/expansion';
+import {MatIconModule} from '@angular/material/icon';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
 
 
 import { FlexLayoutModule } from '@angular/flex-layout';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 
 
 import 'hammerjs';
@@ -33,9 +39,13 @@ import { ProfileComponent } from './profile/profile.component';
 import { CasesComponent } from './cases/cases.component';
 import { CaseformComponent } from './caseform/caseform.component';
 import { RegisterComponent } from './register/register.component';
-import { UserService } from './services/user.service';
 import { CaseinfoComponent } from './caseinfo/caseinfo.component';
-import { CaseService } from './services/case.service';
+import { ApplicationsComponent } from './applications/applications.component';
+import { InterceptorService } from './services/interceptor-service.service';
+import { ApplicationFormComponent } from './application-form/application-form.component';
+import { FaqComponent } from './faq/faq.component';
+import { CasesAllComponent } from './cases-all/cases-all.component';
+import { CasesUserComponent } from './cases-user/cases-user.component';
 
 @NgModule({
   declarations: [
@@ -49,6 +59,11 @@ import { CaseService } from './services/case.service';
     CaseformComponent,
     RegisterComponent,
     CaseinfoComponent,
+    ApplicationsComponent,
+    ApplicationFormComponent,
+    FaqComponent,
+    CasesAllComponent,
+    CasesUserComponent
   ],
   imports: [
     BrowserModule,
@@ -68,12 +83,22 @@ import { CaseService } from './services/case.service';
     MatCheckboxModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatRadioModule
+    MatRadioModule,
+    MatGridListModule,
+    MatTableModule,
+    MatExpansionModule,
+    MatIconModule,
+    MatSlideToggleModule,
+    MatSnackBarModule
   ],
-  providers: [ UserService, CaseService ],
+  providers: [ //UserService, CaseService,
+  { provide: HTTP_INTERCEPTORS, useClass: InterceptorService, multi: true },
+  { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: {hasBackdrop: false} }
+  ],
   entryComponents: [
     LoginComponent,
-    RegisterComponent
+    RegisterComponent,
+    ApplicationFormComponent
   ],
   bootstrap: [AppComponent],
   exports: [AppRoutingModule]

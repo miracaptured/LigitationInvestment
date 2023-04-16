@@ -1,1 +1,26 @@
-<p>caseform works!</p>
+<div fxFlex>
+    <mat-toolbar>
+        <button mat-button mat-dialog-close>&times;</button>
+    </mat-toolbar>
+    <div
+    fxLayout="column"
+    fxLayout.xs="column" 
+    fxLayoutAlign="center center">
+    <form novalidate #investForm="ngForm" (ngSubmit)="onSubmit()">
+        <mat-dialog-content>
+            <p>Сколько денег вы хотите внести?</p>
+            <mat-form-field>
+                <input matInput type="number" min="0"
+                    [(ngModel)]="investment.money" name="money"
+                    #money="ngModel">
+            </mat-form-field>
+        </mat-dialog-content>
+        <mat-dialog-actions>
+            <span class="flex-spacer"></span>
+            <button mat-button mat-dialog-close>Отмена</button>
+            <button mat-button type="submit" class="background-primary text-floral-white"
+            [disabled]="investForm.form.invalid">Внести</button>
+        </mat-dialog-actions>
+    </form>
+    </div>
+</div>

@@ -1,12 +1,12 @@
 <mat-toolbar>
-    <a mat-stroked-button routerLink="/home" style="font-size: 20pt">Судинвест</a>
+    <a mat-flat-button routerLink="/home" style="font-size: 20pt">Судебная инвестиция</a>
     <span class="flex-spacer"></span>
-    <a *ngIf="checkUser()" mat-button routerLink="/cases" routerLinkActive="active">Дела</a>
+    <a mat-button routerLink="/faq" routerLinkActive="active">Q&A</a>
     <span class="flex-spacer"></span>
-    <a mat-button routerLink="/about" routerLinkActive="active">Q&A</a>
+    <a *ngIf="checkUser()" mat-button routerLink="/cases" routerLinkActive="active">{{casesTitle()}}</a>
     <span class="flex-spacer"></span>
     <div fxFlex>
       <a *ngIf="!checkUser()" mat-stroked-button on-click="openLoginForm()">Войти</a>
-      <a *ngIf="checkUser()" mat-fab routerLink="/user" routerLinkActive="active"></a>
+      <a *ngIf="checkUser()" mat-fab routerLink="/user">{{user().name[0]}}</a>
     </div>
   </mat-toolbar>

@@ -11,6 +11,7 @@ $background-pale: #c4cde9;
 .footer{
     background-color: $background-pale;
     @include zero-margin(20px, 0px);
+    width:100%;
 }
 
 .btn-facebook {color:#fff!important; background-color:#3b5998!important;}
