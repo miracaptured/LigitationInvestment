@@ -1,7 +1,8 @@
 
 from datetime import timedelta, datetime
 from typing import Annotated, Union
-from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi.responses import JSONResponse
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +37,13 @@ class Settings(BaseModel):
 def get_config():
     return Settings()
 
+@app.exception_handler(AuthJWTException)
+def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message}
+    )
+
 @app.post("/login")
 async def login(creds: dict, Authorize: AuthJWT = Depends()):
     if task_processor.check_password(creds["email"], creds["password"]):
@@ -55,24 +63,18 @@ async def user(Authorize: AuthJWT = Depends()):
 
 @app.post("/register")
 async def register_user(user: UserSchema, Authorize: AuthJWT = Depends()):
-    try:
-        returned_user = task_processor.register_user(user.to_dict())
-        access_token = Authorize.create_access_token(subject=user.email)
-        return {
-            "user": returned_user,
-            "access_token": access_token
-        }
-    except Exception as e:
-        raise HTTPException(403, e)
+    returned_user = task_processor.register_user(user.to_dict())
+    access_token = Authorize.create_access_token(subject=user.email)
+    return {
+        "user": returned_user,
+        "access_token": access_token
+    }
 
 @app.post("/applications")
 async def add_application(application: ApplicationSchema, Authorize: AuthJWT = Depends()):
-    try:
-        Authorize.jwt_required()
-        return task_processor.add_application(application.to_dict())
-    except:
-        raise HTTPException(403)
-
+    Authorize.jwt_required()
+    return task_processor.add_application(application.to_dict())
+    
 @app.get("/applications")
 async def get_application_list(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
@@ -85,27 +87,18 @@ async def get_application_list(Authorize: AuthJWT = Depends()):
 @app.get("/cases/all")
 async def get_all_cases(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
-    try:
-        return task_processor.get_cases_list()
-    except Exception as e:
-        raise HTTPException(403, e)
+    return task_processor.get_cases_list()
 
 @app.get("/cases")
 async def get_cases_list(Authorize: AuthJWT = Depends()):
-    try:
-        Authorize.jwt_required()
-        user_email = Authorize.get_jwt_subject()
-        user = task_processor.get_user_by_email(user_email)
-        return task_processor.get_cases_by_user(user.user_id)
-    except:
-        raise HTTPException(403)
+    Authorize.jwt_required()
+    user_email = Authorize.get_jwt_subject()
+    user = task_processor.get_user_by_email(user_email)
+    return task_processor.get_cases_by_user(user.user_id)
 
 @app.get("/cases/{case_id}/investment")
 async def get_investment(case_id: int):
-    try:
-        return task_processor.get_investment_by_case(case_id)
-    except:
-        raise HTTPException(403)
+    return task_processor.get_investment_by_case(case_id)
 
 @app.post("/invest")
 async def invest(data: dict, Authorize: AuthJWT = Depends()):

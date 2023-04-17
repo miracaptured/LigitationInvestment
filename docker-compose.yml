@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  postgresql:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      PG_HOSTNAME: $HOST
+      POSTGRES_DB: $DBNAME
+      POSTGRES_USER: $DBUSER
+      POSTGRES_PASSWORD: $DBPASSWORD
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ./back/database/scripts:/docker-entrypoint-initdb.d
+      - ./back/database/config/lib.conf:/var/lib/postgresql/data/postgresql.conf
+    expose:
+      - $PORT
+    ports:
+      - "$PORT:$PORT"
+    networks:
+      - sudinvest-net
+    command: -p $PORT
+  api-sudinvest:
+    image: api-sudinvest:latest
+    container_name: web-api
+    env_file:
+    - .env
+    ports:
+    - 8000:8000
+    networks:
+      - sudinvest-net
+  web:
+    image: web-sudinvest:latest
+    container_name: web-client
+    ports:
+      - 4200:4200
+    networks:
+      - sudinvest-net
+    volumes:
+      - ./front/SudInvest:/project
+      - /project/node_modules
+networks:
+  sudinvest-net:
+    name: sudinvest-net
+    driver: bridge
