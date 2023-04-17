@@ -20,7 +20,7 @@ services:
       - sudinvest-net
     command: -p $PORT
   api-sudinvest:
-    image: api-sudinvest:latest
+    image: miracaptured/api-sudinvest:latest
     container_name: web-api
     env_file:
     - .env
@@ -29,7 +29,7 @@ services:
     networks:
       - sudinvest-net
   web:
-    image: web-sudinvest:latest
+    image: miracaptured/web-sudinvest:latest
     container_name: web-client
     ports:
       - 4200:4200
